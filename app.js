@@ -4,16 +4,25 @@ require('dotenv').config()
 var oxfordEmotion = require("node-oxford-emotion")(process.env.IMAGE_ANALYZE);
 var _ = require('lodash');
 var cors = require('cors');
-
+var formidable = require('formidable');
+var fs = require('fs');
 
 var express = require('express')
 var app = express()
-var bodyParser = require('body-parser')
-app.use( bodyParser.json() );
-app.use(bodyParser.urlencoded({
-	extended: true
-}));
 app.use(cors());
+
+
+//var bodyParser = require('body-parser')
+
+// app.use( bodyParser.json() );
+// app.use(bodyParser.urlencoded({
+// 	extended: true
+// }));
+
+
+
+
+
 
 
 function gethighRate(scores){
@@ -23,7 +32,14 @@ function gethighRate(scores){
 		res.push({score: scores[i] ,name: i  })
 	}
 	const arr = _.sortBy(res, 'score').reverse();
-	return [arr[0].name, arr[1].name ];
+	let result = []
+	result.push({type: arr[0].name, score:arr[0].score   } || {})
+	result.push({type: arr[1].name, score:arr[1].score   } || {})
+	return result;
+}
+function binaryRead(file) {
+    var bitmap = fs.readFileSync(file);
+    return new Buffer(bitmap.toString('binary'),'binary');
 }
 
 
@@ -45,18 +61,34 @@ app.get('/image', function (req, res) {
 	}
 
 });
-app.post('/image', function (req, res) {
-	if (req.body.image !== "undefined") {
-		var emotion = oxfordEmotion.recognize("image", req.body.image , function(payload) {
-			const key = gethighRate(payload[0].scores)
-			res.send(key);
+
+app.post('/image', function(req, res) {
+	var form = new formidable.IncomingForm();
+
+    form.parse(req);
+
+    form.on('fileBegin', function (name, file){
+        file.path = __dirname + '/temp/' + file.name;
+    });
+
+    form.on('file', function (name, file){
+
+		let bin = binaryRead(file.path);
+
+		oxfordEmotion.recognize("image", bin, function(payload) {
+			let result =  JSON.parse(payload);
+			if (result[0] !== undefined) {
+				let key = gethighRate(result[0].scores);
+				fs.unlinkSync(file.path)
+				res.send(key);
+			} else {
+				fs.unlinkSync(file.path)
+				res.send([]);
+			}
+
 		});
-	} else {
-		res.send({message:"No image"})
-	}
-
-});
-
+    });
+})
 
 
 app.listen(process.env.PORT, function () {
