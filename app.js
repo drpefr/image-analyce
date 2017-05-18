@@ -32,7 +32,8 @@ app.get('/', function (req, res) {
 })
 app.get('/image', function (req, res) {
 
-	const imgUrl = req.param["image"] || null ;
+	const imgUrl = req.param("image") || null ;
+	console.log(imgUrl);
 	if (imgUrl !== null) {
 		oxfordEmotion.recognize("url", imgUrl, function(payload) {
 			const key = gethighRate(payload[0].scores)
@@ -58,5 +59,5 @@ app.post('/image', function (req, res) {
 
 
 app.listen(process.env.PORT, function () {
-  console.log('Example app listening on port 3000!')
+  console.log('Example app listening on port', process.env.PORT)
 })
