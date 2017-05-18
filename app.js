@@ -1,7 +1,7 @@
 
 require('dotenv').config()
 //"https://github.com/mateioprea/node-oxford"
-var oxfordEmotion = require("node-oxford-emotion")(process.env.API_KEY);
+var oxfordEmotion = require("node-oxford-emotion")(process.env.IMAGE_ANALYZE);
 var _ = require('lodash');
 
 
@@ -57,6 +57,6 @@ app.post('/image', function (req, res) {
 
 
 
-app.listen(3000, function () {
+app.listen(process.env.PORT, function () {
   console.log('Example app listening on port 3000!')
 })
