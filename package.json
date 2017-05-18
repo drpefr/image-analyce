@@ -13,9 +13,7 @@
     "body-parser": "^1.17.2",
     "express": "^4.15.3",
     "lodash": "^4.17.4",
-    "node-oxford-emotion": "^1.0.4"
-  },
-  "devDependencies": {
+    "node-oxford-emotion": "^1.0.4",
     "dotenv": "^4.0.0"
   }
 }
