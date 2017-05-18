@@ -50,7 +50,6 @@ app.get('/', function (req, res) {
 app.get('/image', function (req, res) {
 
 	const imgUrl = req.param("image") || null ;
-	console.log(imgUrl);
 	if (imgUrl !== null) {
 		oxfordEmotion.recognize("url", imgUrl, function(payload) {
 			const key = gethighRate(payload[0].scores)
