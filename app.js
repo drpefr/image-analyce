@@ -3,7 +3,7 @@ require('dotenv').config()
 //"https://github.com/mateioprea/node-oxford"
 var oxfordEmotion = require("node-oxford-emotion")(process.env.IMAGE_ANALYZE);
 var _ = require('lodash');
-
+var cors = require('cors');
 
 
 var express = require('express')
@@ -13,6 +13,7 @@ app.use( bodyParser.json() );
 app.use(bodyParser.urlencoded({
 	extended: true
 }));
+app.use(cors());
 
 
 function gethighRate(scores){
