@@ -51,9 +51,10 @@ function gethighRate(scores){
 		res.push({score: scores[i] ,name: i  })
 	}
 	const arr = _.sortBy(res, "score").reverse();
-	let result = []
-	result.push({type: arr[0].name, score:arr[0].score   } || {})
-	result.push({type: arr[1].name, score:arr[1].score   } || {})
+	//let result = []
+	//result.push({type: arr[0].name, score:arr[0].score   } || {})
+	//result.push({type: arr[1].name, score:arr[1].score   } || {})
+	let result = arr[0].name ;//+ "," + arr[1].name;
 	return result;
 }
 
@@ -63,22 +64,26 @@ function binaryRead(file) {
 }
 
 
-
+app.post("/dummy", function (req, res) {
+	const dummy = require("./dummy-art.js");
+  res.send(dummy)
+})
 app.get("/", function (req, res) {
   res.send("ready!")
 })
 app.get("/image", function (req, res) {
 
-	const imgUrl = req.param("image") || null ;
+	const imgUrl = req.query.image || null ;
 	if (imgUrl !== null) {
 		oxfordEmotion.recognize("url", imgUrl, function(payload) {
 			const key = gethighRate(payload[0].scores)
 			request.post({
 				headers:	{"content-type" : "application/x-www-form-urlencoded"},
-				url:		"https://sentimentalist.herokuapp.com/articles",
-				body:		"mes=heydude"
+				url:		"https://sentimentalist.herokuapp.com/articles?mood=sadness"
+				//body:		"mes=heydude"
 			}, function(error, response, body){
 			  console.log(body);
+			  //https://sentimentalist.herokuapp.com/articles?mood=sadness
 			  res.send(key)
 			});
 
@@ -97,7 +102,23 @@ app.post("/image", function(req, res) {
 	 		oxfordEmotion.recognize("url", awsConfig.fullPath+filename, function(payload) {
 				if (payload[0] !== undefined) {
 					const key = gethighRate(payload[0].scores)
-		 			res.send(key)
+
+					request.post({
+						headers:	{"content-type" : "application/x-www-form-urlencoded"},
+						url:		"https://sentimentalist.herokuapp.com/articles?mood=" + key
+						//body:		"mes=heydude"
+					}, function(error, response, body){
+
+					  if (error === null ){
+						  res.send(body)
+					  } else {
+						  res.send({message:"No article"});
+					  }
+
+					});
+
+
+
 				} else res.send({message:"No scores"});
 
 	 		});
