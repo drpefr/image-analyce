@@ -6,23 +6,43 @@ var _ = require('lodash');
 var cors = require('cors');
 var formidable = require('formidable');
 var fs = require('fs');
+const bodyParser = require('body-parser');
+/**
+ * AWS S3
+ */
+const S3FS = require('s3fs');
+const awsConfig = require('./config/aws.js');
+const s3Opts = {
+	accessKeyId: awsConfig.accessKeyId,
+	secretAccessKey: awsConfig.secretAccessKey
+};
+const s3fsImpl = new S3FS(awsConfig.bucketPath, s3Opts);
 
 var express = require('express')
 var app = express()
 app.use(cors());
 
-
-//var bodyParser = require('body-parser')
-
-// app.use( bodyParser.json() );
-// app.use(bodyParser.urlencoded({
-// 	extended: true
-// }));
-
-
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
+/**
+ * Connect multi-party middleware
+ */
+const multiparty = require('connect-multiparty');
+app.use(multiparty( {'maxFilesSize': 22000000000,'autoFiles': true} ));
 
 
+function pushToS3(req, res, next) {
 
+	if (req.files.file.originalFilename === "") next("missing file");
+	else {
+		const epocMili = (new Date().getTime() || Math.random(999999));
+		const combinedFileName = "file-" + epocMili + "." + req.files.file.originalFilename.substring(req.files.file.originalFilename.lastIndexOf(".")+1);
+		let file = req.files.file;
+		let stream = fs.createReadStream(file.path);
+			s3fsImpl.writeFile(combinedFileName, stream);
+		next(null, combinedFileName);
+	}
+}
 
 
 function gethighRate(scores){
@@ -37,6 +57,7 @@ function gethighRate(scores){
 	result.push({type: arr[1].name, score:arr[1].score   } || {})
 	return result;
 }
+
 function binaryRead(file) {
     var bitmap = fs.readFileSync(file);
     return new Buffer(bitmap.toString('binary'),'binary');
@@ -62,6 +83,19 @@ app.get('/image', function (req, res) {
 });
 
 app.post('/image', function(req, res) {
+
+	 pushToS3(req, res, function(err, filename){
+		 if (err === null) {
+	 		oxfordEmotion.recognize("url", awsConfig.fullPath+filename, function(payload) {
+	 			const key = gethighRate(payload[0].scores)
+	 			res.send(key)
+	 		});
+	 	} else {
+	 		res.send({message:"No image"})
+	 	}
+	 })
+
+	/*
 	var form = new formidable.IncomingForm();
 
     form.parse(req);
@@ -87,6 +121,7 @@ app.post('/image', function(req, res) {
 
 		});
     });
+	*/
 })
 
 
